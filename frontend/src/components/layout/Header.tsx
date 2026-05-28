@@ -59,21 +59,21 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <header className="h-16 shrink-0 flex items-center px-4 sm:px-6 border-b border-zinc-200/80 bg-white/80 backdrop-blur-xl dark:border-white/[0.06] dark:bg-ink-900/40">
+      <header className="h-16 shrink-0 flex items-center px-3 sm:px-4 lg:px-6 border-b border-zinc-200/80 bg-white/80 backdrop-blur-xl dark:border-white/[0.06] dark:bg-ink-900/40">
         {/* Izquierda: hamburguesa + search */}
-        <div className="flex items-center gap-3 flex-1">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 type="button"
                 onClick={onToggleSidebar}
-                className="p-2 rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors dark:text-ink-300 dark:hover:text-white dark:hover:bg-white/[0.06] active:scale-95"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors dark:text-ink-300 dark:hover:text-white dark:hover:bg-white/[0.06] active:scale-95 shrink-0"
                 aria-label="Alternar menú"
               >
                 <Menu className="h-5 w-5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>Alternar menú</TooltipContent>
+            <TooltipContent>Menú</TooltipContent>
           </Tooltip>
 
           {/* Search */}
@@ -111,7 +111,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="relative p-2 rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors dark:text-ink-300 dark:hover:text-white dark:hover:bg-white/[0.06] active:scale-95 overflow-hidden"
+                className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors dark:text-ink-300 dark:hover:text-white dark:hover:bg-white/[0.06] active:scale-95 overflow-hidden shrink-0"
                 aria-label={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
               >
                 <AnimatePresence mode="wait" initial={false}>
@@ -136,7 +136,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="relative p-2 rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors dark:text-ink-300 dark:hover:text-white dark:hover:bg-white/[0.06] active:scale-95"
+                className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors dark:text-ink-300 dark:hover:text-white dark:hover:bg-white/[0.06] active:scale-95 shrink-0"
                 aria-label="Notificaciones"
               >
                 <Bell className="h-5 w-5" />
@@ -153,7 +153,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
           <Separator
             orientation="vertical"
-            className="mx-2 h-6 bg-zinc-200 dark:bg-white/[0.08]"
+            className="hidden sm:block mx-1 sm:mx-2 h-6 bg-zinc-200 dark:bg-white/[0.08]"
           />
 
           {/* User dropdown menu */}

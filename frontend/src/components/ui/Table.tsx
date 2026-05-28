@@ -156,7 +156,7 @@ export function Table<T>({
         className,
       )}
     >
-      <TablePrimitive>
+      <TablePrimitive className="min-w-[640px]">
         <TableHeader>
           <tr className="border-b border-zinc-100 dark:border-white/[0.06]">
             {columns.map((c) => (
