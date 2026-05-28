@@ -280,13 +280,16 @@ export function installMockApi() {
     return config;
   });
 
-  // Pre-loguea el usuario falso para saltar el login
-  const store = useAuthStore.getState();
-  if (!store.accessToken) {
-    store.setAuth({
-      accessToken: 'fake-token', refreshToken: 'fake-refresh',
-      expiresIn: 900, user: fakeUser,
-    });
+  // Pre-loguea el usuario falso SOLO si VITE_DEV_AUTOLOGIN=1 (separado de VITE_DEV_NOAUTH)
+  // Permite ver el flujo de login + animación de cortinas con el mock activo.
+  if (import.meta.env.VITE_DEV_AUTOLOGIN === '1') {
+    const store = useAuthStore.getState();
+    if (!store.accessToken) {
+      store.setAuth({
+        accessToken: 'fake-token', refreshToken: 'fake-refresh',
+        expiresIn: 900, user: fakeUser,
+      });
+    }
   }
 
   // eslint-disable-next-line no-console
