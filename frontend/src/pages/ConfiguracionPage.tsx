@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Card, CardBody, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { empresaApi } from '@/services/api.service';
 import { extractErrorMessage } from '@/lib/api';
 
@@ -66,14 +67,15 @@ export function ConfiguracionPage() {
     onError: (e) => toast.error(extractErrorMessage(e)),
   });
 
-  if (isLoading) return <p className="text-slate-500">Cargando…</p>;
+  if (isLoading) return <p className="text-zinc-500 dark:text-ink-300">Cargando…</p>;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Configuración</h1>
-        <p className="text-sm text-slate-500">Datos de la empresa y reglas de nómina</p>
-      </div>
+      <PageHeader
+        eyebrow="Sistema"
+        title="Configuración"
+        description="Datos de la empresa y reglas de nómina"
+      />
 
       <form onSubmit={handleSubmit((v) => saveMut.mutate(v))} className="space-y-6">
         <Card>

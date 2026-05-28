@@ -5,6 +5,7 @@ import { Download, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { nominaApi, reportesApi } from '@/services/api.service';
 import { extractErrorMessage } from '@/lib/api';
 
@@ -47,15 +48,16 @@ export function ReportesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Reportes</h1>
-        <p className="text-sm text-slate-500">Exporta los datos de tu empresa</p>
-      </div>
+      <PageHeader
+        eyebrow="Operación"
+        title="Reportes"
+        description="Exporta los datos de tu empresa"
+      />
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5 text-brand-600" /> Empleados</CardTitle>
+            <CardTitle className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5 text-zinc-700 dark:text-violet-300" /> Empleados</CardTitle>
             <CardDescription>Listado completo en CSV</CardDescription>
           </CardHeader>
           <CardBody className="space-y-4">
@@ -81,7 +83,7 @@ export function ReportesPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5 text-brand-600" /> Nómina</CardTitle>
+            <CardTitle className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5 text-zinc-700 dark:text-fuchsia-300" /> Nómina</CardTitle>
             <CardDescription>Detalle por período</CardDescription>
           </CardHeader>
           <CardBody className="space-y-4">

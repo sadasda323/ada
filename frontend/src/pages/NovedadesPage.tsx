@@ -12,6 +12,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Table } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { empleadosApi, novedadesApi } from '@/services/api.service';
 import { extractErrorMessage } from '@/lib/api';
 import { formatCOP, formatDate } from '@/lib/utils';
@@ -122,15 +123,16 @@ export function NovedadesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Novedades</h1>
-          <p className="text-sm text-slate-500">Horas extra, bonificaciones, vacaciones, deducciones</p>
-        </div>
-        <Button onClick={() => onOpen()}>
-          <Plus className="h-4 w-4" /> Nueva novedad
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Operación"
+        title="Novedades"
+        description="Horas extra, bonificaciones, vacaciones, deducciones"
+        actions={
+          <Button onClick={() => onOpen()}>
+            <Plus className="h-4 w-4" /> Nueva novedad
+          </Button>
+        }
+      />
 
       <div className="flex flex-wrap gap-3">
         <Select
@@ -160,26 +162,33 @@ export function NovedadesPage() {
         columns={[
           {
             key: 'empleado', header: 'Empleado',
-            render: (n: Novedad) => n.empleado ? `${n.empleado.nombre} ${n.empleado.apellido}` : '—',
+            render: (n: Novedad) => n.empleado ? (
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-gradient-brand text-white text-[10px] font-bold flex items-center justify-center h-display ring-2 ring-white dark:ring-ink-900">
+                  {n.empleado.nombre[0]}{n.empleado.apellido[0]}
+                </div>
+                <span className="text-zinc-900 dark:text-ink-100">{n.empleado.nombre} {n.empleado.apellido}</span>
+              </div>
+            ) : '—',
           },
           { key: 'tipo', header: 'Tipo', render: (n) => <Badge tone="brand">{tipoLabel[n.tipo] || n.tipo}</Badge> },
-          { key: 'fechaInicio', header: 'Inicio', render: (n) => formatDate(n.fechaInicio) },
-          { key: 'fechaFin', header: 'Fin', render: (n) => formatDate(n.fechaFin) },
-          { key: 'cantidad', header: 'Cantidad', render: (n) => n.cantidad },
-          { key: 'monto', header: 'Monto', render: (n) => <span className="tabular-nums">{formatCOP(n.monto)}</span> },
-          { key: 'estado', header: 'Estado', render: (n) => <Badge tone={estadoTone[n.estado]}>{n.estado}</Badge> },
+          { key: 'fechaInicio', header: 'Inicio', render: (n) => <span className="text-zinc-500 dark:text-ink-300">{formatDate(n.fechaInicio)}</span> },
+          { key: 'fechaFin', header: 'Fin', render: (n) => <span className="text-zinc-500 dark:text-ink-300">{formatDate(n.fechaFin)}</span> },
+          { key: 'cantidad', header: 'Cantidad', render: (n) => <span className="font-mono text-zinc-700 dark:text-ink-200">{n.cantidad}</span> },
+          { key: 'monto', header: 'Monto', render: (n) => <span className="font-mono text-zinc-900 dark:text-ink-100">{formatCOP(n.monto)}</span> },
+          { key: 'estado', header: 'Estado', render: (n) => <Badge tone={estadoTone[n.estado]} dot>{n.estado}</Badge> },
           {
             key: '_actions', header: '', className: 'w-40 text-right',
             render: (n) => (
               <div className="flex justify-end gap-1">
                 {n.estado === 'PENDIENTE' && (
                   <>
-                    <button onClick={() => aprobarMut.mutate(n.id)} className="p-1.5 rounded-md hover:bg-emerald-50 text-emerald-600" title="Aprobar"><Check className="h-4 w-4" /></button>
-                    <button onClick={() => rechazarMut.mutate(n.id)} className="p-1.5 rounded-md hover:bg-red-50 text-red-600" title="Rechazar"><X className="h-4 w-4" /></button>
+                    <button onClick={() => aprobarMut.mutate(n.id)} className="p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/15 text-zinc-500 dark:text-ink-300 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors" title="Aprobar"><Check className="h-4 w-4" /></button>
+                    <button onClick={() => rechazarMut.mutate(n.id)} className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/15 text-zinc-500 dark:text-ink-300 hover:text-rose-600 dark:hover:text-rose-300 transition-colors" title="Rechazar"><X className="h-4 w-4" /></button>
                   </>
                 )}
-                <button onClick={() => onOpen(n)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500"><Pencil className="h-4 w-4" /></button>
-                <button onClick={() => setConfirmId(n.id)} className="p-1.5 rounded-md hover:bg-red-50 text-red-500"><Trash2 className="h-4 w-4" /></button>
+                <button onClick={() => onOpen(n)} className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.06] text-zinc-500 dark:text-ink-300 hover:text-zinc-900 dark:hover:text-white transition-colors"><Pencil className="h-4 w-4" /></button>
+                <button onClick={() => setConfirmId(n.id)} className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-zinc-500 dark:text-ink-300 hover:text-rose-600 dark:hover:text-rose-300 transition-colors"><Trash2 className="h-4 w-4" /></button>
               </div>
             ),
           },

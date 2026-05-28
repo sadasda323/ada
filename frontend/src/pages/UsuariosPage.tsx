@@ -12,9 +12,11 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Table } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { empleadosApi, usuariosApi } from '@/services/api.service';
 import { extractErrorMessage } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
+import { initials } from '@/lib/utils';
 import type { User } from '@/types';
 
 const passwordSchema = z
@@ -120,24 +122,30 @@ export function UsuariosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Usuarios</h1>
-          <p className="text-sm text-slate-500">Cuentas de acceso al sistema</p>
-        </div>
-        <Button onClick={() => onOpen()}>
-          <Plus className="h-4 w-4" /> Nuevo usuario
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Sistema"
+        title="Usuarios"
+        description="Cuentas de acceso al sistema"
+        actions={
+          <Button onClick={() => onOpen()}>
+            <Plus className="h-4 w-4" /> Nuevo usuario
+          </Button>
+        }
+      />
 
       <Table
         columns={[
           {
             key: 'nombre', header: 'Usuario',
             render: (u: User) => (
-              <div>
-                <div className="font-medium text-slate-900">{u.nombre} {u.apellido}</div>
-                <div className="text-xs text-slate-500">{u.email}</div>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-gradient-brand text-white text-[11px] font-bold flex items-center justify-center h-display ring-2 ring-white dark:ring-ink-900 shrink-0">
+                  {initials(u.nombre, u.apellido)}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-medium text-zinc-900 dark:text-ink-100 truncate">{u.nombre} {u.apellido}</span>
+                  <span className="text-xs text-zinc-500 dark:text-ink-400 truncate">{u.email}</span>
+                </div>
               </div>
             ),
           },
@@ -146,9 +154,9 @@ export function UsuariosPage() {
             key: '_actions', header: '', className: 'w-24 text-right',
             render: (u) => (
               <div className="flex justify-end gap-1">
-                <button onClick={() => onOpen(u)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500"><Pencil className="h-4 w-4" /></button>
+                <button onClick={() => onOpen(u)} className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.06] text-zinc-500 dark:text-ink-300 hover:text-zinc-900 dark:hover:text-white transition-colors"><Pencil className="h-4 w-4" /></button>
                 {u.id !== me?.id && (
-                  <button onClick={() => setConfirmId(u.id)} className="p-1.5 rounded-md hover:bg-red-50 text-red-500"><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={() => setConfirmId(u.id)} className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-zinc-500 dark:text-ink-300 hover:text-rose-600 dark:hover:text-rose-300 transition-colors"><Trash2 className="h-4 w-4" /></button>
                 )}
               </div>
             ),

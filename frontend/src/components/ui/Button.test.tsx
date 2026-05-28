@@ -23,7 +23,7 @@ describe('<Button />', () => {
 
   it('aplica variantes', () => {
     const { rerender } = render(<Button variant="danger">x</Button>);
-    expect(screen.getByRole('button').className).toContain('bg-red-600');
+    expect(screen.getByRole('button').className).toContain('from-rose-500');
     rerender(<Button variant="outline">x</Button>);
     expect(screen.getByRole('button').className).toContain('border');
   });

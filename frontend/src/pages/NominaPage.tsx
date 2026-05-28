@@ -12,6 +12,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Table } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { nominaApi, reportesApi } from '@/services/api.service';
 import { extractErrorMessage } from '@/lib/api';
 import { formatCOP, formatDate } from '@/lib/utils';
@@ -109,26 +110,27 @@ export function NominaPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Nómina</h1>
-          <p className="text-sm text-slate-500">Genera, recalcula y liquida períodos</p>
-        </div>
-        <Button onClick={() => setModalOpen(true)}>
-          <Plus className="h-4 w-4" /> Nuevo período
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Operación"
+        title="Nómina"
+        description="Genera, recalcula y liquida períodos"
+        actions={
+          <Button onClick={() => setModalOpen(true)}>
+            <Plus className="h-4 w-4" /> Nuevo período
+          </Button>
+        }
+      />
 
       <Card className="p-0">
         <Table<PeriodoNomina>
           columns={[
-            { key: 'nombre', header: 'Período', render: (p) => <span className="font-medium text-slate-900">{p.nombre}</span> },
-            { key: 'fechaInicio', header: 'Inicio', render: (p) => formatDate(p.fechaInicio) },
-            { key: 'fechaFin', header: 'Fin', render: (p) => formatDate(p.fechaFin) },
-            { key: 'totalDevengado', header: 'Devengado', render: (p) => <span className="tabular-nums">{formatCOP(p.totalDevengado)}</span> },
-            { key: 'totalDeducciones', header: 'Deducciones', render: (p) => <span className="tabular-nums">{formatCOP(p.totalDeducciones)}</span> },
-            { key: 'totalNeto', header: 'Neto', render: (p) => <span className="tabular-nums font-semibold text-slate-900">{formatCOP(p.totalNeto)}</span> },
-            { key: 'estado', header: 'Estado', render: (p) => <Badge tone={estadoTone[p.estado]}>{p.estado}</Badge> },
+            { key: 'nombre', header: 'Período', render: (p) => <span className="font-medium text-zinc-900 dark:text-ink-100">{p.nombre}</span> },
+            { key: 'fechaInicio', header: 'Inicio', render: (p) => <span className="text-zinc-500 dark:text-ink-300">{formatDate(p.fechaInicio)}</span> },
+            { key: 'fechaFin', header: 'Fin', render: (p) => <span className="text-zinc-500 dark:text-ink-300">{formatDate(p.fechaFin)}</span> },
+            { key: 'totalDevengado', header: 'Devengado', render: (p) => <span className="font-mono text-zinc-900 dark:text-ink-100">{formatCOP(p.totalDevengado)}</span> },
+            { key: 'totalDeducciones', header: 'Deducciones', render: (p) => <span className="font-mono text-rose-600 dark:text-rose-300">-{formatCOP(p.totalDeducciones)}</span> },
+            { key: 'totalNeto', header: 'Neto', render: (p) => <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-300">{formatCOP(p.totalNeto)}</span> },
+            { key: 'estado', header: 'Estado', render: (p) => <Badge tone={estadoTone[p.estado]} dot>{p.estado}</Badge> },
           ]}
           rows={periodos}
           rowKey={(p) => p.id}
@@ -140,10 +142,11 @@ export function NominaPage() {
 
       {selected && (
         <Card>
-          <div className="px-6 pt-5 pb-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <div className="px-6 pt-5 pb-4 border-b border-zinc-100 dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">{selected.nombre}</h2>
-              <p className="text-xs text-slate-500">
+              <span className="section-eyebrow">Detalle</span>
+              <h2 className="mt-1 h-display text-lg text-zinc-900 dark:text-white">{selected.nombre}</h2>
+              <p className="text-xs text-zinc-500 dark:text-ink-400 mt-0.5">
                 {formatDate(selected.fechaInicio)} – {formatDate(selected.fechaFin)} · {selected.detalles?.length ?? 0} empleados
               </p>
             </div>
@@ -153,7 +156,7 @@ export function NominaPage() {
               </Button>
               {selected.estado === 'ABIERTO' && (
                 <>
-                  <Button variant="outline" onClick={() => recalcMut.mutate(selected.id)} loading={recalcMut.isPending}>
+                  <Button variant="secondary" onClick={() => recalcMut.mutate(selected.id)} loading={recalcMut.isPending}>
                     <RefreshCw className="h-4 w-4" /> Recalcular
                   </Button>
                   <Button onClick={() => liquidarMut.mutate(selected.id)} loading={liquidarMut.isPending}>
@@ -171,20 +174,20 @@ export function NominaPage() {
                   key: 'empleado', header: 'Empleado',
                   render: (d: any) => (
                     <div className="flex flex-col">
-                      <span className="font-medium text-slate-900">
+                      <span className="font-medium text-zinc-900 dark:text-ink-100">
                         {d.empleado?.nombre} {d.empleado?.apellido}
                       </span>
-                      <span className="text-xs text-slate-500">{d.empleado?.documento}</span>
+                      <span className="text-xs text-zinc-500 dark:text-ink-400">{d.empleado?.documento}</span>
                     </div>
                   ),
                 },
-                { key: 'salarioBase', header: 'Salario', render: (d: any) => <span className="tabular-nums">{formatCOP(d.salarioBase)}</span> },
-                { key: 'auxilioTransporte', header: 'Aux. Trans.', render: (d: any) => <span className="tabular-nums">{formatCOP(d.auxilioTransporte)}</span> },
-                { key: 'totalDevengado', header: 'Devengado', render: (d: any) => <span className="tabular-nums">{formatCOP(d.totalDevengado)}</span> },
-                { key: 'salud', header: 'Salud', render: (d: any) => <span className="tabular-nums text-red-600">-{formatCOP(d.salud)}</span> },
-                { key: 'pension', header: 'Pensión', render: (d: any) => <span className="tabular-nums text-red-600">-{formatCOP(d.pension)}</span> },
-                { key: 'totalDeducciones', header: 'Deducciones', render: (d: any) => <span className="tabular-nums text-red-600">-{formatCOP(d.totalDeducciones)}</span> },
-                { key: 'neto', header: 'Neto', render: (d: any) => <span className="tabular-nums font-bold text-slate-900">{formatCOP(d.neto)}</span> },
+                { key: 'salarioBase', header: 'Salario', render: (d: any) => <span className="font-mono text-zinc-900 dark:text-ink-100">{formatCOP(d.salarioBase)}</span> },
+                { key: 'auxilioTransporte', header: 'Aux. Trans.', render: (d: any) => <span className="font-mono text-zinc-700 dark:text-ink-200">{formatCOP(d.auxilioTransporte)}</span> },
+                { key: 'totalDevengado', header: 'Devengado', render: (d: any) => <span className="font-mono text-zinc-900 dark:text-ink-100">{formatCOP(d.totalDevengado)}</span> },
+                { key: 'salud', header: 'Salud', render: (d: any) => <span className="font-mono text-rose-600 dark:text-rose-300">-{formatCOP(d.salud)}</span> },
+                { key: 'pension', header: 'Pensión', render: (d: any) => <span className="font-mono text-rose-600 dark:text-rose-300">-{formatCOP(d.pension)}</span> },
+                { key: 'totalDeducciones', header: 'Deducciones', render: (d: any) => <span className="font-mono text-rose-600 dark:text-rose-300">-{formatCOP(d.totalDeducciones)}</span> },
+                { key: 'neto', header: 'Neto', render: (d: any) => <span className="font-mono font-bold text-emerald-600 dark:text-emerald-300">{formatCOP(d.neto)}</span> },
               ]}
               rows={selected.detalles ?? []}
               rowKey={(d: any) => d.id}
@@ -192,19 +195,10 @@ export function NominaPage() {
             />
           </div>
 
-          <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 grid sm:grid-cols-3 gap-4 text-right">
-            <div>
-              <p className="text-xs text-slate-500">Total devengado</p>
-              <p className="text-lg font-bold text-slate-900 tabular-nums">{formatCOP(selected.totalDevengado)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500">Total deducciones</p>
-              <p className="text-lg font-bold text-red-600 tabular-nums">-{formatCOP(selected.totalDeducciones)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500">Neto a pagar</p>
-              <p className="text-xl font-bold text-emerald-600 tabular-nums">{formatCOP(selected.totalNeto)}</p>
-            </div>
+          <div className="px-6 py-4 border-t border-zinc-100 dark:border-white/[0.06] bg-zinc-50/50 dark:bg-white/[0.02] grid sm:grid-cols-3 gap-4">
+            <SummaryItem label="Total devengado" value={formatCOP(selected.totalDevengado)} accent="violet" />
+            <SummaryItem label="Total deducciones" value={`-${formatCOP(selected.totalDeducciones)}`} accent="rose" />
+            <SummaryItem label="Neto a pagar" value={formatCOP(selected.totalNeto)} accent="emerald" big />
           </div>
         </Card>
       )}
@@ -228,6 +222,24 @@ export function NominaPage() {
           </div>
         </form>
       </Modal>
+    </div>
+  );
+}
+
+function SummaryItem({
+  label, value, accent, big,
+}: {
+  label: string; value: string; accent: 'violet' | 'rose' | 'emerald'; big?: boolean;
+}) {
+  const accentText = {
+    violet: 'text-violet-600 dark:text-violet-300',
+    rose: 'text-rose-600 dark:text-rose-300',
+    emerald: 'text-emerald-600 dark:text-emerald-300',
+  }[accent];
+  return (
+    <div className="rounded-xl bg-zinc-50/70 border border-zinc-100 dark:bg-white/[0.02] dark:border-white/[0.04] p-4">
+      <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500 dark:text-ink-400 font-semibold">{label}</p>
+      <p className={`mt-1.5 font-mono ${big ? 'text-2xl' : 'text-lg'} font-bold ${accentText}`}>{value}</p>
     </div>
   );
 }

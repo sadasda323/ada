@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,9 +13,10 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Table } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { areasApi, cargosApi, empleadosApi } from '@/services/api.service';
 import { extractErrorMessage } from '@/lib/api';
-import { formatCOP, formatDate } from '@/lib/utils';
+import { formatCOP, formatDate, initials } from '@/lib/utils';
 import type { Empleado, EstadoEmpleado } from '@/types';
 
 const schema = z.object({
@@ -51,7 +53,8 @@ const estadoTone: Record<EstadoEmpleado, 'success' | 'default' | 'warning' | 'da
 
 export function EmpleadosPage() {
   const qc = useQueryClient();
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [estadoFilter, setEstadoFilter] = useState('');
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Empleado | null>(null);
@@ -131,19 +134,20 @@ export function EmpleadosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Empleados</h1>
-          <p className="text-sm text-slate-500">Gestiona el personal de tu empresa</p>
-        </div>
-        <Button onClick={() => onOpen()}>
-          <Plus className="h-4 w-4" /> Nuevo empleado
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Personas"
+        title="Empleados"
+        description="Gestiona el personal de tu empresa"
+        actions={
+          <Button onClick={() => onOpen()}>
+            <Plus className="h-4 w-4" /> Nuevo empleado
+          </Button>
+        }
+      />
 
       <div className="flex flex-wrap gap-3">
         <div className="relative w-full sm:max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-ink-400" />
           <Input className="pl-9" placeholder="Buscar por nombre, documento o email..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
         </div>
         <Select
@@ -167,23 +171,28 @@ export function EmpleadosPage() {
           {
             key: 'nombre', header: 'Empleado',
             render: (e) => (
-              <div className="flex flex-col">
-                <span className="font-medium text-slate-900">{e.nombre} {e.apellido}</span>
-                <span className="text-xs text-slate-500">{e.documento} · {e.email || 'Sin email'}</span>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-gradient-brand text-white text-[11px] font-bold flex items-center justify-center h-display ring-2 ring-white dark:ring-ink-900 shrink-0">
+                  {initials(e.nombre, e.apellido)}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-medium text-zinc-900 dark:text-ink-100 truncate">{e.nombre} {e.apellido}</span>
+                  <span className="text-xs text-zinc-500 dark:text-ink-400 truncate">{e.documento} · {e.email || 'Sin email'}</span>
+                </div>
               </div>
             ),
           },
-          { key: 'cargo', header: 'Cargo', render: (e) => e.cargo?.nombre || '—' },
-          { key: 'area', header: 'Área', render: (e) => e.area?.nombre || '—' },
-          { key: 'salario', header: 'Salario', render: (e) => <span className="tabular-nums">{formatCOP(e.salario)}</span> },
-          { key: 'fechaIngreso', header: 'Ingreso', render: (e) => formatDate(e.fechaIngreso) },
-          { key: 'estado', header: 'Estado', render: (e) => <Badge tone={estadoTone[e.estado]}>{e.estado}</Badge> },
+          { key: 'cargo', header: 'Cargo', render: (e) => <span className="text-zinc-700 dark:text-ink-200">{e.cargo?.nombre || '—'}</span> },
+          { key: 'area', header: 'Área', render: (e) => <span className="text-zinc-700 dark:text-ink-200">{e.area?.nombre || '—'}</span> },
+          { key: 'salario', header: 'Salario', render: (e) => <span className="font-mono text-zinc-900 dark:text-ink-100">{formatCOP(e.salario)}</span> },
+          { key: 'fechaIngreso', header: 'Ingreso', render: (e) => <span className="text-zinc-500 dark:text-ink-300">{formatDate(e.fechaIngreso)}</span> },
+          { key: 'estado', header: 'Estado', render: (e) => <Badge tone={estadoTone[e.estado]} dot>{e.estado}</Badge> },
           {
             key: '_actions', header: '', className: 'w-24 text-right',
             render: (e) => (
               <div className="flex justify-end gap-1">
-                <button onClick={() => onOpen(e)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500"><Pencil className="h-4 w-4" /></button>
-                <button onClick={() => setConfirmId(e.id)} className="p-1.5 rounded-md hover:bg-red-50 text-red-500"><Trash2 className="h-4 w-4" /></button>
+                <button onClick={() => onOpen(e)} className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.06] text-zinc-500 dark:text-ink-300 hover:text-zinc-900 dark:hover:text-white transition-colors"><Pencil className="h-4 w-4" /></button>
+                <button onClick={() => setConfirmId(e.id)} className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-zinc-500 dark:text-ink-300 hover:text-rose-600 dark:hover:text-rose-300 transition-colors"><Trash2 className="h-4 w-4" /></button>
               </div>
             ),
           },
@@ -197,7 +206,7 @@ export function EmpleadosPage() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar empleado' : 'Nuevo empleado'} size="xl">
         <form onSubmit={handleSubmit((v) => saveMut.mutate(v))} className="space-y-6">
           <section>
-            <h3 className="text-sm font-semibold text-slate-900 mb-3">Datos personales</h3>
+            <h3 className="section-eyebrow mb-3">Datos personales</h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Select label="Tipo doc." options={[
                 { value: 'CC', label: 'Cédula (CC)' },
@@ -216,7 +225,7 @@ export function EmpleadosPage() {
           </section>
 
           <section>
-            <h3 className="text-sm font-semibold text-slate-900 mb-3">Contrato y salario</h3>
+            <h3 className="section-eyebrow mb-3">Contrato y salario</h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Input label="Fecha ingreso *" type="date" error={errors.fechaIngreso?.message} {...register('fechaIngreso')} />
               <Select label="Tipo contrato" options={[
@@ -257,7 +266,7 @@ export function EmpleadosPage() {
           </section>
 
           <section>
-            <h3 className="text-sm font-semibold text-slate-900 mb-3">Bancarios y afiliaciones</h3>
+            <h3 className="section-eyebrow mb-3">Bancarios y afiliaciones</h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Input label="Banco" {...register('banco')} />
               <Input label="Cuenta bancaria" {...register('cuentaBancaria')} />
@@ -268,7 +277,7 @@ export function EmpleadosPage() {
             </div>
           </section>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+          <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-white/[0.06]">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
             <Button type="submit" loading={saveMut.isPending}>Guardar empleado</Button>
           </div>

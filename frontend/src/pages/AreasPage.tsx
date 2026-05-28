@@ -4,13 +4,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Table } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { areasApi } from '@/services/api.service';
 import { extractErrorMessage } from '@/lib/api';
 import type { Area } from '@/types';
@@ -68,37 +69,48 @@ export function AreasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Áreas</h1>
-          <p className="text-sm text-slate-500">Departamentos de tu empresa</p>
-        </div>
-        <Button onClick={() => onOpen()}>
-          <Plus className="h-4 w-4" /> Nueva área
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Estructura"
+        title="Áreas"
+        description="Departamentos de tu empresa"
+        actions={
+          <Button onClick={() => onOpen()}>
+            <Plus className="h-4 w-4" /> Nueva área
+          </Button>
+        }
+      />
 
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-ink-400" />
         <Input className="pl-9" placeholder="Buscar área..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
       </div>
 
       <Table
         columns={[
-          { key: 'nombre', header: 'Nombre', render: (a) => <span className="font-medium text-slate-900">{a.nombre}</span> },
-          { key: 'descripcion', header: 'Descripción', render: (a) => a.descripcion || '—' },
+          {
+            key: 'nombre', header: 'Nombre',
+            render: (a) => (
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-zinc-100 border border-zinc-200 dark:bg-violet-500/15 dark:border-violet-400/20 flex items-center justify-center">
+                  <Building2 className="h-4 w-4 text-zinc-900 dark:text-violet-300" />
+                </div>
+                <span className="font-medium text-zinc-900 dark:text-ink-100">{a.nombre}</span>
+              </div>
+            ),
+          },
+          { key: 'descripcion', header: 'Descripción', render: (a) => <span className="text-zinc-500 dark:text-ink-300">{a.descripcion || '—'}</span> },
           {
             key: 'activa', header: 'Estado',
-            render: (a) => <Badge tone={a.activa ? 'success' : 'default'}>{a.activa ? 'Activa' : 'Inactiva'}</Badge>,
+            render: (a) => <Badge tone={a.activa ? 'success' : 'default'} dot>{a.activa ? 'Activa' : 'Inactiva'}</Badge>,
           },
           {
             key: '_actions', header: '', className: 'w-24 text-right',
             render: (a) => (
               <div className="flex justify-end gap-1">
-                <button onClick={() => onOpen(a)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500" aria-label="Editar">
+                <button onClick={() => onOpen(a)} className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.06] text-zinc-500 dark:text-ink-300 hover:text-zinc-900 dark:hover:text-white transition-colors" aria-label="Editar">
                   <Pencil className="h-4 w-4" />
                 </button>
-                <button onClick={() => setConfirmId(a.id)} className="p-1.5 rounded-md hover:bg-red-50 text-red-500" aria-label="Eliminar">
+                <button onClick={() => setConfirmId(a.id)} className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-zinc-500 dark:text-ink-300 hover:text-rose-600 dark:hover:text-rose-300 transition-colors" aria-label="Eliminar">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -115,8 +127,8 @@ export function AreasPage() {
         <form onSubmit={handleSubmit((v) => saveMut.mutate(v))} className="space-y-4">
           <Input label="Nombre *" error={errors.nombre?.message} {...register('nombre')} />
           <Input label="Descripción" {...register('descripcion')} />
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" {...register('activa')} className="rounded text-brand-600" /> Activa
+          <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-ink-200">
+            <input type="checkbox" {...register('activa')} className="h-4 w-4 rounded text-zinc-900 dark:text-violet-500 focus:ring-zinc-900/20 dark:focus:ring-violet-500/40" /> Activa
           </label>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>

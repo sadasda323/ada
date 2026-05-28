@@ -4,8 +4,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { AuthShell } from '@/components/layout/AuthShell';
 import { authApi } from '@/services/auth.service';
 import { useAuthStore } from '@/stores/auth.store';
 import { extractErrorMessage } from '@/lib/api';
@@ -21,11 +23,10 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { email: '', password: '' } });
+  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { email: '', password: '' },
+  });
 
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
@@ -42,54 +43,40 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-brand-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="mx-auto h-12 w-12 rounded-2xl bg-brand-600 text-white font-bold flex items-center justify-center text-lg shadow-elevated">
-            HR
-          </div>
-          <h1 className="mt-4 text-2xl font-semibold text-slate-900">HRCO</h1>
-          <p className="text-sm text-slate-500">Sistema de gestión de RRHH y nómina</p>
-        </div>
+    <AuthShell title="Bienvenido de vuelta" subtitle="Ingresa con tus credenciales para continuar">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Input
+          label="Email"
+          type="email"
+          autoComplete="email"
+          placeholder="admin@empresa.com"
+          error={errors.email?.message}
+          {...register('email')}
+        />
+        <Input
+          label="Contraseña"
+          type="password"
+          autoComplete="current-password"
+          placeholder="••••••••"
+          error={errors.password?.message}
+          {...register('password')}
+        />
+        <Button type="submit" className="w-full" loading={loading} size="lg">
+          Entrar <ArrowRight className="h-4 w-4" />
+        </Button>
+      </form>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-elevated p-8 animate-fade-in">
-          <h2 className="text-lg font-semibold text-slate-900">Iniciar sesión</h2>
-          <p className="text-sm text-slate-500">Ingresa con tus credenciales</p>
+      <p className="mt-6 text-center text-sm text-zinc-500 dark:text-ink-300">
+        ¿Aún no tienes empresa?{' '}
+        <Link to="/registro" className="font-semibold text-zinc-900 hover:text-zinc-700 underline underline-offset-2 dark:text-violet-300 dark:hover:text-violet-200 dark:no-underline">
+          Crear cuenta
+        </Link>
+      </p>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              autoComplete="email"
-              placeholder="admin@empresa.com"
-              error={errors.email?.message}
-              {...register('email')}
-            />
-            <Input
-              label="Contraseña"
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              error={errors.password?.message}
-              {...register('password')}
-            />
-            <Button type="submit" className="w-full" loading={loading} size="lg">
-              Entrar
-            </Button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-slate-500">
-            ¿Aún no tienes empresa registrada?{' '}
-            <Link to="/registro" className="font-medium text-brand-600 hover:text-brand-700">
-              Crear empresa
-            </Link>
-          </p>
-        </div>
-
-        <p className="mt-6 text-center text-xs text-slate-400">
-          Demo: admin@hrco.test / Admin123!
-        </p>
+      <div className="mt-8 p-3 rounded-xl bg-zinc-100/70 border border-zinc-200 text-center dark:bg-white/[0.03] dark:border-white/[0.06]">
+        <p className="text-[11px] uppercase tracking-wider text-zinc-700 dark:text-violet-300/80 font-semibold">Demo</p>
+        <p className="text-xs text-zinc-700 dark:text-ink-200 mt-1 font-mono">admin@hrco.test / Admin123!</p>
       </div>
-    </div>
+    </AuthShell>
   );
 }
