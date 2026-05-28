@@ -5,9 +5,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { ArrowRight } from 'lucide-react';
+
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { AuthShell } from '@/components/layout/AuthShell';
+import { AuthShell, useAuthShell } from '@/components/layout/AuthShell';
 import { authApi } from '@/services/auth.service';
 import { useAuthStore } from '@/stores/auth.store';
 import { extractErrorMessage } from '@/lib/api';
@@ -40,6 +41,7 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
+  const shell = useAuthShell();
 
   const { register, handleSubmit, trigger, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -63,7 +65,7 @@ export function RegisterPage() {
       });
       setAuth(data);
       toast.success('Empresa creada correctamente');
-      navigate('/dashboard', { replace: true });
+      shell.close();
     } catch (e) {
       toast.error(extractErrorMessage(e));
     } finally {
@@ -72,7 +74,12 @@ export function RegisterPage() {
   };
 
   return (
-    <AuthShell title="Crea tu empresa" subtitle={step === 1 ? 'Paso 1 de 2 · Datos de la empresa' : 'Paso 2 de 2 · Administrador'}>
+    <AuthShell
+      title="Crea tu empresa"
+      subtitle={step === 1 ? 'Paso 1 de 2 · Datos de la empresa' : 'Paso 2 de 2 · Administrador'}
+      closing={shell.closing}
+      onClosed={() => navigate('/dashboard', { replace: true })}
+    >
       <div className="flex items-center gap-2 mb-6">
         <div className={`h-1.5 flex-1 rounded-full ${step >= 1 ? 'bg-gradient-brand' : 'bg-zinc-200 dark:bg-white/[0.08]'}`} />
         <div className={`h-1.5 flex-1 rounded-full transition-colors ${step >= 2 ? 'bg-gradient-brand' : 'bg-zinc-200 dark:bg-white/[0.08]'}`} />
@@ -121,7 +128,7 @@ export function RegisterPage() {
         )}
       </form>
 
-      <p className="mt-6 text-center text-sm text-zinc-500 dark:text-ink-300">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         ¿Ya tienes cuenta?{' '}
         <Link
           to="/login"
