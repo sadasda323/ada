@@ -1,138 +1,96 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  Users, DollarSign, Clock, TrendingUp, ArrowUpRight,
-  Activity, Sparkles, Calendar, Building2, Briefcase,
-} from 'lucide-react';
 import { motion } from 'framer-motion';
+import {
+  Bell, ChevronDown, ExternalLink, MoreVertical,
+  Star, Users, DollarSign, Target, Calendar,
+  TrendingUp, ChevronRight, AlertTriangle,
+} from 'lucide-react';
 
 import { dashboardApi, novedadesApi } from '@/services/api.service';
 import { useAuthStore } from '@/stores/auth.store';
-import { formatCOP, formatDate } from '@/lib/utils';
-import { Badge } from '@/components/ui/Badge';
+import { formatCOP, initials } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/Button';
+import { Stagger, StaggerItem } from '@/components/ui/motion';
+
 import {
-  AnimatedCounter,
-  Stagger,
-  StaggerItem,
-} from '@/components/ui/motion';
+  AnimatedNumber,
+  ArcGauge,
+  MiniBarChart,
+  MiniCandleChart,
+} from '@/components/charts';
+import { SalesAnalyticsChart } from '@/components/charts/SalesAnalyticsChart';
+import { TopProductsHeatmap } from '@/components/charts/TopProductsHeatmap';
 
 const rolLabel: Record<string, string> = {
-  ADMIN_EMPRESA: 'Administrador de Empresa',
+  ADMIN_EMPRESA: 'Administrador',
   RRHH: 'Recursos Humanos',
   CONTADOR: 'Contador',
   EMPLEADO: 'Empleado',
 };
 
-interface KpiCardProps {
-  title: string;
-  value: number | string;
-  rawNumber?: number;
-  format?: (n: number) => string;
-  loading?: boolean;
-  subtitle?: string;
-  icon: React.ComponentType<{ className?: string }>;
-  trend?: number;
-  accent: 'violet' | 'fuchsia' | 'cyan' | 'amber';
-}
+/* ─── Datos demo / derivados ────────────────────────────────────────────── */
 
-const accentStyles = {
-  violet:  {
-    gradient: 'from-zinc-100 to-transparent dark:from-violet-500/20 dark:via-violet-500/5 dark:to-transparent',
-    icon: 'bg-zinc-100 text-zinc-900 border-zinc-200 dark:bg-violet-500/15 dark:text-violet-300 dark:border-violet-400/20',
-    blur: 'bg-zinc-200/30 dark:bg-violet-500/30',
+const revenueBars = [42, 55, 38, 60, 48, 70, 52, 80, 58, 90, 75, 95];
+const ordersCandles = [
+  { o: 35, c: 50, h: 55, l: 30 },
+  { o: 50, c: 42, h: 58, l: 38 },
+  { o: 42, c: 60, h: 65, l: 40 },
+  { o: 60, c: 55, h: 68, l: 50 },
+  { o: 55, c: 70, h: 75, l: 52 },
+  { o: 70, c: 65, h: 78, l: 60 },
+  { o: 65, c: 82, h: 88, l: 62 },
+  { o: 82, c: 78, h: 90, l: 72 },
+  { o: 78, c: 92, h: 95, l: 75 },
+];
+
+const salesAnalyticsData = [
+  { label: '10 abr', value: 1820, amount: 2120 },
+  { label: '11 abr', value: 2950, amount: 3210 },
+  { label: '12 abr', value: 2410, amount: 2680 },
+  { label: '13 abr', value: 3320, amount: 3580 },
+  { label: '14 abr', value: 2890, amount: 3150 },
+  { label: '15 abr', value: 3760, amount: 4020 },
+  { label: '16 abr', value: 3490, amount: 3820 },
+];
+
+const topRows = ['TI', 'Operaciones', 'RRHH', 'Comercial', 'Finanzas', 'Soporte'];
+const topCols = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+const topMatrix = [
+  [0.9, 0.7, 0.85, 0.6, 0.95, 0.3, 0.1],
+  [0.6, 0.8, 0.55, 0.9, 0.7, 0.4, 0.2],
+  [0.4, 0.6, 0.45, 0.5, 0.65, 0.3, 0.15],
+  [0.7, 0.5, 0.75, 0.85, 0.6, 0.5, 0.3],
+  [0.5, 0.7, 0.6, 0.55, 0.8, 0.25, 0.1],
+  [0.3, 0.5, 0.4, 0.6, 0.5, 0.35, 0.2],
+];
+
+const reviews = [
+  {
+    id: 'r1',
+    nombre: 'Kevin S.',
+    fecha: 'hace 5 min',
+    rating: 5,
+    comentario:
+      'Súper rápido el cierre de nómina y muy preciso. La nueva vista hace todo más fácil.',
+    color: 'bg-orange-100 text-orange-700',
   },
-  fuchsia: {
-    gradient: 'from-zinc-100 to-transparent dark:from-fuchsia-500/20 dark:via-fuchsia-500/5 dark:to-transparent',
-    icon: 'bg-zinc-100 text-zinc-900 border-zinc-200 dark:bg-fuchsia-500/15 dark:text-fuchsia-300 dark:border-fuchsia-400/20',
-    blur: 'bg-zinc-200/30 dark:bg-fuchsia-500/30',
+  {
+    id: 'r2',
+    nombre: 'Rina T.',
+    fecha: 'hace 12 min',
+    rating: 5,
+    comentario:
+      'Excelente seguimiento de horas extra. El equipo de RRHH lo agradeció mucho.',
+    color: 'bg-emerald-100 text-emerald-700',
   },
-  cyan: {
-    gradient: 'from-zinc-100 to-transparent dark:from-cyan-500/20 dark:via-cyan-500/5 dark:to-transparent',
-    icon: 'bg-zinc-100 text-zinc-900 border-zinc-200 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-400/20',
-    blur: 'bg-zinc-200/30 dark:bg-cyan-500/30',
-  },
-  amber: {
-    gradient: 'from-zinc-100 to-transparent dark:from-amber-500/20 dark:via-amber-500/5 dark:to-transparent',
-    icon: 'bg-zinc-100 text-zinc-900 border-zinc-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-400/20',
-    blur: 'bg-zinc-200/30 dark:bg-amber-500/30',
-  },
-};
+];
 
-function KpiCard({ title, value, rawNumber, format, loading, subtitle, icon: Icon, trend, accent }: KpiCardProps) {
-  const a = accentStyles[accent];
-
-  return (
-    <StaggerItem>
-      <motion.div
-        whileHover={{ y: -2 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className="group relative overflow-hidden rounded-2xl bg-white border border-zinc-200/80 shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-ink-800/40 dark:backdrop-blur-xl dark:border-white/[0.06] dark:shadow-card-dark dark:hover:shadow-elevated-dark"
-      >
-        <div className={`absolute inset-0 bg-gradient-to-br ${a.gradient} opacity-60 group-hover:opacity-100 transition-opacity`} />
-        <div className={`absolute -top-10 -right-10 h-32 w-32 rounded-full ${a.blur} blur-2xl opacity-50 group-hover:opacity-80 transition-opacity`} />
-        <div className="relative p-5">
-          <div className="flex items-center justify-between">
-            <h4 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</h4>
-            <div className={`h-9 w-9 rounded-xl border flex items-center justify-center ${a.icon}`}>
-              <Icon className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-4 h-display text-3xl font-bold text-zinc-900 dark:text-white tracking-tight2 tabular-nums">
-            {loading ? (
-              <Skeleton className="h-9 w-24" />
-            ) : rawNumber !== undefined ? (
-              <AnimatedCounter value={rawNumber} format={format} />
-            ) : (
-              value
-            )}
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-            {trend !== undefined && trend !== 0 && (
-              <motion.span
-                initial={{ opacity: 0, x: -4 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6 }}
-                className={`inline-flex items-center gap-0.5 text-[11px] font-semibold ${
-                  trend > 0 ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'
-                }`}
-              >
-                <ArrowUpRight className={`h-3 w-3 ${trend < 0 ? 'rotate-180' : ''}`} />
-                {Math.abs(trend).toFixed(1)}%
-              </motion.span>
-            )}
-          </div>
-        </div>
-      </motion.div>
-    </StaggerItem>
-  );
-}
-
-const tipoColor: Record<string, string> = {
-  HORAS_EXTRA_DIURNA: 'cyan',
-  HORAS_EXTRA_NOCTURNA: 'cyan',
-  HORAS_EXTRA_DOMINICAL: 'cyan',
-  BONIFICACION: 'success',
-  COMISION: 'success',
-  VACACIONES: 'info',
-  INCAPACIDAD: 'warning',
-  DEDUCCION: 'danger',
-  PRESTAMO: 'danger',
-};
-
-const tipoLabel: Record<string, string> = {
-  INCAPACIDAD: 'Incapacidad',
-  VACACIONES: 'Vacaciones',
-  HORAS_EXTRA_DIURNA: 'H.E. diurna',
-  HORAS_EXTRA_NOCTURNA: 'H.E. nocturna',
-  HORAS_EXTRA_DOMINICAL: 'H.E. dominical',
-  BONIFICACION: 'Bonificación',
-  COMISION: 'Comisión',
-  DEDUCCION: 'Deducción',
-  PRESTAMO: 'Préstamo',
-  LICENCIA: 'Licencia',
-  AUSENCIA: 'Ausencia',
-};
+/* ═══════════════════════════════════════════════════════════════════════════
+ * DashboardPage — Yann UIUX inspired, adaptado a HRCO
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 export function DashboardPage() {
   const user = useAuthStore((s) => s.user);
@@ -146,158 +104,269 @@ export function DashboardPage() {
     queryFn: () => novedadesApi.list({ pageSize: 6 }),
   });
 
+  const totalRevenue = Number(data?.nominaDelMes ?? 0);
+  const totalOrders = data?.totalEmpleados ?? 0;
+  const monthlyTarget = 1000;
+  const monthlyAchieved = data?.empleadosActivos ?? 0;
+  const monthlyPct = monthlyTarget > 0 ? (monthlyAchieved / monthlyTarget) * 100 : 0;
+
   return (
-    <div className="space-y-8">
-      {/* Hero */}
+    <div className="space-y-6">
+      {/* Hero header */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="relative overflow-hidden rounded-3xl border border-zinc-200/80 dark:border-transparent dark:ring-gradient"
+        transition={{ duration: 0.4 }}
+        className="flex flex-wrap items-center justify-between gap-3"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-zinc-100 via-zinc-50 to-white dark:from-violet-700/40 dark:via-fuchsia-600/20 dark:to-cyan-500/15 dark:bg-[length:200%_100%] dark:animate-gradient-x" />
-        <div className="absolute inset-0 bg-grid-pattern bg-grid-32 opacity-[0.06] dark:opacity-[0.04]" />
-        <div className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-zinc-200/40 dark:bg-fuchsia-500/30 blur-3xl animate-float" />
-        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-zinc-200/40 dark:bg-violet-600/30 blur-3xl" />
-
-        <div className="relative px-6 sm:px-10 py-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <span className="section-eyebrow flex items-center gap-2">
-              <Sparkles className="h-3.5 w-3.5" /> Tu panel
-            </span>
-            <h1 className="mt-2 h-display text-3xl sm:text-4xl text-zinc-900 dark:text-white">
-              Bienvenido, <span className="text-gradient">{user?.nombre}</span> 👋
-            </h1>
-            <p className="mt-1.5 text-sm text-zinc-600 dark:text-ink-200/80 max-w-xl">
-              {rolLabel[user?.rol ?? ''] || user?.rol} · Gestiona tu equipo, nómina y novedades desde un solo lugar.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 border border-zinc-200 text-xs text-zinc-700 dark:bg-white/[0.06] dark:border-white/[0.08] dark:text-ink-200">
-              <Calendar className="h-3.5 w-3.5 text-zinc-900 dark:text-violet-300" />
-              {new Intl.DateTimeFormat('es-CO', { dateStyle: 'long' }).format(new Date())}
-            </div>
-          </div>
+        <div>
+          <h1 className="h-display text-2xl sm:text-3xl text-zinc-900 dark:text-white tracking-tight2">
+            Resumen general
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {user ? `Hola, ${user.nombre}.` : 'Hola.'} Así está rindiendo tu organización hoy.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 border border-zinc-200 text-xs text-zinc-700 dark:bg-white/[0.06] dark:border-white/[0.08] dark:text-ink-200">
+          <Calendar className="h-3.5 w-3.5 text-zinc-900 dark:text-violet-300" />
+          {new Intl.DateTimeFormat('es-CO', { dateStyle: 'long' }).format(new Date())}
         </div>
       </motion.div>
 
-      {/* KPIs (con stagger) */}
+      {/* KPI cards */}
       <Stagger
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
         staggerChildren={0.08}
         delayChildren={0.1}
       >
+        {/* 1. Total Revenue → Nómina del mes */}
         <KpiCard
-          title="Empleados activos"
-          value={data?.empleadosActivos ?? 0}
-          rawNumber={data?.empleadosActivos ?? 0}
+          icon={<DollarSign className="h-4 w-4" />}
+          label="Nómina del mes"
           loading={isLoading}
-          subtitle={isLoading ? 'Cargando…' : `Total: ${data?.totalEmpleados ?? 0}`}
-          icon={Users}
-          accent="violet"
+          value={
+            <AnimatedNumber
+              value={totalRevenue}
+              format={(n) => formatCOP(n)}
+            />
+          }
+          delta={4.2}
+          deltaText="vs. mes anterior"
+          chart={<MiniBarChart data={revenueBars} className="h-12 w-32" width={130} height={48} />}
         />
-        <KpiCard
-          title="Nómina del mes"
-          value={formatCOP(data?.nominaDelMes)}
-          rawNumber={Number(data?.nominaDelMes ?? 0)}
-          format={(n) => formatCOP(n)}
-          loading={isLoading}
-          subtitle={data?.ultimoPeriodo ? data.ultimoPeriodo.nombre : 'Sin períodos'}
-          icon={DollarSign}
-          accent="fuchsia"
-        />
-        <KpiCard
-          title="Novedades pendientes"
-          value={data?.novedadesPendientes ?? 0}
-          rawNumber={data?.novedadesPendientes ?? 0}
-          loading={isLoading}
-          subtitle={data?.novedadesPendientes ? 'Requieren aprobación' : 'Todo al día'}
-          icon={Clock}
-          accent="amber"
-        />
-        <KpiCard
-          title="Crecimiento"
-          value={`${(data?.crecimientoEmpleados ?? 0).toFixed(1)}%`}
-          rawNumber={data?.crecimientoEmpleados ?? 0}
-          format={(n) => `${n.toFixed(1)}%`}
-          loading={isLoading}
-          subtitle="Empleados vs mes anterior"
-          icon={TrendingUp}
-          trend={data?.crecimientoEmpleados}
-          accent="cyan"
-        />
-      </Stagger>
 
-      {/* Lower row */}
-      <Stagger
-        className="grid gap-6 lg:grid-cols-3"
-        staggerChildren={0.08}
-        delayChildren={0.3}
-      >
-        {/* Estructura */}
-        <StaggerItem className="lg:col-span-1">
-          <div className="rounded-2xl bg-white border border-zinc-200/80 shadow-sm p-6 dark:bg-ink-800/40 dark:backdrop-blur-xl dark:border-white/[0.06] dark:shadow-card-dark h-full">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <span className="section-eyebrow">Estructura</span>
-                <h2 className="mt-1 h-display text-lg text-zinc-900 dark:text-white">Resumen de la empresa</h2>
+        {/* 2. Total Orders → Empleados totales */}
+        <KpiCard
+          icon={<Users className="h-4 w-4" />}
+          label="Empleados totales"
+          loading={isLoading}
+          value={<AnimatedNumber value={totalOrders} />}
+          delta={4.0}
+          deltaText="vs. mes anterior"
+          chart={<MiniCandleChart data={ordersCandles} className="h-12 w-32" width={130} height={48} />}
+        />
+
+        {/* 3. Monthly Goals → Meta mensual de activos */}
+        <div className="rounded-2xl bg-white border border-zinc-200/80 shadow-sm p-5 relative overflow-hidden dark:bg-ink-800/40 dark:backdrop-blur-xl dark:border-white/[0.06] dark:shadow-card-dark">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-zinc-100 border border-zinc-200 dark:bg-violet-500/15 dark:border-violet-400/20 flex items-center justify-center text-zinc-900 dark:text-violet-300">
+                <Target className="h-4 w-4" />
               </div>
-              <div className="h-9 w-9 rounded-xl bg-zinc-100 border border-zinc-200 dark:bg-violet-500/15 dark:border-violet-400/20 flex items-center justify-center">
-                <Activity className="h-4 w-4 text-zinc-900 dark:text-violet-300" />
+              <span className="text-sm font-medium text-zinc-900 dark:text-ink-100">
+                Meta mensual
+              </span>
+            </div>
+            <button
+              type="button"
+              className="p-1 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+              aria-label="Más opciones"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex items-end justify-between gap-3">
+            <div className="space-y-2 mt-2">
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  Objetivo
+                </p>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-ink-100 tabular-nums">
+                  {monthlyTarget.toLocaleString('es-CO')}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  Logrado
+                </p>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-ink-100 tabular-nums">
+                  {monthlyAchieved.toLocaleString('es-CO')}
+                </p>
               </div>
             </div>
-            <div className="space-y-3">
-              <StatRow label="Áreas" value={data?.totalAreas ?? 0} icon={Building2} accent="violet" />
-              <StatRow label="Cargos" value={data?.totalCargos ?? 0} icon={Briefcase} accent="cyan" />
-              <StatRow label="Empleados totales" value={data?.totalEmpleados ?? 0} icon={Users} accent="fuchsia" />
+            <ArcGauge value={monthlyPct} size={130} thickness={14} />
+          </div>
+        </div>
+      </Stagger>
+
+      {/* Sales Analytics + Top Products */}
+      <Stagger
+        className="grid gap-4 lg:grid-cols-3"
+        staggerChildren={0.1}
+        delayChildren={0.3}
+      >
+        <StaggerItem className="lg:col-span-2">
+          <SalesAnalyticsChart
+            title="Ventas / nómina diaria"
+            scopeLabel="Ventas diarias"
+            rangeLabel="10–16 abr 2026"
+            data={salesAnalyticsData}
+          />
+        </StaggerItem>
+
+        <StaggerItem className="lg:col-span-1">
+          <TopProductsHeatmap
+            title="Actividad por área"
+            scopeLabel="Esta semana"
+            rows={topRows}
+            cols={topCols}
+            matrix={topMatrix}
+          />
+        </StaggerItem>
+      </Stagger>
+
+      {/* Budget + Reviews + Low Stock */}
+      <Stagger
+        className="grid gap-4 lg:grid-cols-3"
+        staggerChildren={0.08}
+        delayChildren={0.5}
+      >
+        {/* Budget Usage → Distribución de nómina */}
+        <StaggerItem>
+          <div className="rounded-2xl bg-white border border-zinc-200/80 shadow-sm p-5 h-full dark:bg-ink-800/40 dark:backdrop-blur-xl dark:border-white/[0.06] dark:shadow-card-dark">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-ink-100 h-display">
+                Distribución de nómina
+              </h3>
+              <button
+                type="button"
+                className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+                aria-label="Abrir"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <BudgetBar
+                label="Salarios base"
+                current={76700000}
+                total={120000000}
+                index={0}
+              />
+              <BudgetBar
+                label="Horas extra + novedades"
+                current={17950000}
+                total={25000000}
+                index={1}
+              />
+            </div>
+
+            <div className="mt-5 flex items-start gap-2 p-3 rounded-xl bg-violet-50 border border-violet-100 dark:bg-violet-500/10 dark:border-violet-400/15">
+              <div className="h-6 w-6 rounded-md bg-gradient-brand flex items-center justify-center shrink-0 mt-0.5">
+                <TrendingUp className="h-3 w-3 text-white" />
+              </div>
+              <p className="text-xs text-zinc-700 dark:text-ink-200 leading-relaxed">
+                Las horas extra usan <strong>72% del presupuesto.</strong> Reasigna al área de Operaciones para mejorar productividad <strong>+18%</strong> este mes.
+              </p>
             </div>
           </div>
         </StaggerItem>
 
-        {/* Actividad */}
-        <StaggerItem className="lg:col-span-2">
-          <div className="rounded-2xl bg-white border border-zinc-200/80 shadow-sm p-6 dark:bg-ink-800/40 dark:backdrop-blur-xl dark:border-white/[0.06] dark:shadow-card-dark h-full">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <span className="section-eyebrow">Actividad</span>
-                <h2 className="mt-1 h-display text-lg text-zinc-900 dark:text-white">Novedades recientes</h2>
-              </div>
-              <Badge tone="brand" dot>en vivo</Badge>
+        {/* Customer Review → Aprobaciones recientes */}
+        <StaggerItem>
+          <div className="rounded-2xl bg-white border border-zinc-200/80 shadow-sm p-5 h-full dark:bg-ink-800/40 dark:backdrop-blur-xl dark:border-white/[0.06] dark:shadow-card-dark">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-ink-100 h-display">
+                Reseñas del equipo
+              </h3>
+              <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg border bg-white border-zinc-200 text-xs text-zinc-700 dark:bg-white/[0.04] dark:border-white/[0.08] dark:text-ink-200">
+                Recientes <ChevronDown className="h-3.5 w-3.5" />
+              </span>
             </div>
 
-            <div className="space-y-2">
-              {novedadesQ.isLoading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-14" />
-                ))
-              ) : (novedadesQ.data?.items ?? []).length === 0 ? (
-                <p className="py-10 text-center text-sm text-muted-foreground">No hay novedades aún.</p>
-              ) : (
-                (novedadesQ.data?.items ?? []).slice(0, 5).map((n, idx) => (
-                  <motion.div
-                    key={n.id}
-                    initial={{ opacity: 0, x: -6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 + idx * 0.05, duration: 0.3 }}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/[0.03] transition-colors"
-                  >
-                    <div className="h-9 w-9 shrink-0 rounded-xl bg-gradient-brand text-white text-[11px] font-bold flex items-center justify-center h-display ring-2 ring-white dark:ring-ink-900">
-                      {n.empleado ? `${n.empleado.nombre[0]}${n.empleado.apellido[0]}` : '·'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-zinc-900 dark:text-ink-100 truncate">
-                        <span className="font-medium">
-                          {n.empleado ? `${n.empleado.nombre} ${n.empleado.apellido}` : 'Empleado'}
-                        </span>
-                        <span className="text-muted-foreground"> · {tipoLabel[n.tipo] || n.tipo}</span>
+            <div className="space-y-4">
+              {reviews.map((r, idx) => (
+                <motion.div
+                  key={r.id}
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.6 + idx * 0.08, duration: 0.3 }}
+                  className="flex items-start gap-3"
+                >
+                  <Avatar size="sm" className={cn('shrink-0', r.color)}>
+                    <AvatarFallback className={r.color}>
+                      {r.nombre.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-zinc-900 dark:text-ink-100">
+                        {r.nombre}
                       </p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">{formatDate(n.fechaInicio)}</p>
+                      <Stars value={r.rating} />
                     </div>
-                    <Badge tone={(tipoColor[n.tipo] ?? 'default') as any}>{n.estado}</Badge>
-                  </motion.div>
-                ))
-              )}
+                    <p className="text-xs text-muted-foreground mt-0.5">{r.fecha}</p>
+                    <p className="text-xs text-zinc-700 dark:text-ink-200 mt-1.5 leading-relaxed">
+                      "{r.comentario}"
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
+          </div>
+        </StaggerItem>
+
+        {/* Low Stock Alert → Próximos vencimientos */}
+        <StaggerItem>
+          <div className="rounded-2xl bg-white border border-zinc-200/80 shadow-sm p-5 h-full flex flex-col dark:bg-ink-800/40 dark:backdrop-blur-xl dark:border-white/[0.06] dark:shadow-card-dark">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-ink-100 h-display">
+                Alertas de vencimiento
+              </h3>
+              <button
+                type="button"
+                className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+                aria-label="Abrir"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex items-start gap-3 mb-4">
+              <div className="h-14 w-14 rounded-xl bg-gradient-brand flex items-center justify-center shrink-0 shadow-glow-violet">
+                <AlertTriangle className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-zinc-900 dark:text-ink-100 truncate">
+                  Contratos por vencer
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {(novedadesQ.data?.items?.length ?? 0)} en los próximos 30 días
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-zinc-700 dark:text-ink-200 leading-relaxed mb-4 flex-1">
+              Hay contratos a término fijo próximos a vencer. Considera renovarlos o
+              iniciar el proceso de desvinculación con anticipación.
+            </p>
+
+            <Button className="w-full justify-center group">
+              Ver vencimientos
+              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Button>
           </div>
         </StaggerItem>
       </Stagger>
@@ -305,31 +374,128 @@ export function DashboardPage() {
   );
 }
 
-function StatRow({
-  label, value, icon: Icon, accent,
-}: {
-  label: string; value: number; icon: React.ComponentType<{ className?: string }>; accent: 'violet' | 'cyan' | 'fuchsia';
-}) {
-  const accentClass = {
-    violet:  'bg-zinc-100 text-zinc-900 border-zinc-200 dark:bg-violet-500/15 dark:text-violet-300 dark:border-violet-400/20',
-    cyan:    'bg-zinc-100 text-zinc-900 border-zinc-200 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-400/20',
-    fuchsia: 'bg-zinc-100 text-zinc-900 border-zinc-200 dark:bg-fuchsia-500/15 dark:text-fuchsia-300 dark:border-fuchsia-400/20',
-  }[accent];
+/* ─── Subcomponentes ────────────────────────────────────────────────────── */
+
+interface KpiCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  delta: number;
+  deltaText?: string;
+  chart: React.ReactNode;
+  loading?: boolean;
+}
+
+function KpiCard({ icon, label, value, delta, deltaText, chart, loading }: KpiCardProps) {
+  const positive = delta >= 0;
+
   return (
-    <motion.div
-      whileHover={{ x: 2 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      className="flex items-center justify-between p-3 rounded-xl bg-zinc-50/70 border border-zinc-100 hover:bg-zinc-50 transition-colors dark:bg-white/[0.02] dark:border-white/[0.04] dark:hover:bg-white/[0.04]"
-    >
-      <div className="flex items-center gap-3">
-        <div className={`h-9 w-9 rounded-xl border flex items-center justify-center ${accentClass}`}>
-          <Icon className="h-4 w-4" />
+    <StaggerItem>
+      <motion.div
+        whileHover={{ y: -2 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+        className="rounded-2xl bg-white border border-zinc-200/80 shadow-sm p-5 relative overflow-hidden dark:bg-ink-800/40 dark:backdrop-blur-xl dark:border-white/[0.06] dark:shadow-card-dark"
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-zinc-100 border border-zinc-200 dark:bg-violet-500/15 dark:border-violet-400/20 flex items-center justify-center text-zinc-900 dark:text-violet-300">
+              {icon}
+            </div>
+            <span className="text-sm font-medium text-zinc-900 dark:text-ink-100">{label}</span>
+          </div>
+          <button
+            type="button"
+            className="p-1 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+            aria-label="Más opciones"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
         </div>
-        <span className="text-sm text-zinc-700 dark:text-ink-200">{label}</span>
+
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <div className="h-display text-3xl font-bold text-zinc-900 dark:text-white tracking-tight2">
+              {loading ? <Skeleton className="h-9 w-32" /> : value}
+            </div>
+            <div className="mt-2 flex items-center gap-1.5">
+              <span
+                className={cn(
+                  'inline-flex items-center gap-0.5 text-[11px] font-semibold px-1.5 py-0.5 rounded-md',
+                  positive
+                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                    : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
+                )}
+              >
+                <TrendingUp
+                  className={cn('h-3 w-3', !positive && 'rotate-180')}
+                />
+                {Math.abs(delta).toFixed(1)}%
+              </span>
+              {deltaText && (
+                <span className="text-[11px] text-muted-foreground">{deltaText}</span>
+              )}
+            </div>
+          </div>
+          <div className="shrink-0">{chart}</div>
+        </div>
+      </motion.div>
+    </StaggerItem>
+  );
+}
+
+interface BudgetBarProps {
+  label: string;
+  current: number;
+  total: number;
+  index: number;
+}
+
+function BudgetBar({ label, current, total, index }: BudgetBarProps) {
+  const pct = Math.min((current / total) * 100, 100);
+  return (
+    <div>
+      <div className="flex items-center justify-between text-xs mb-1.5">
+        <span className="text-zinc-700 dark:text-ink-200 font-medium">{label}</span>
+        <span className="text-muted-foreground tabular-nums">
+          {formatCOP(current)} <span className="text-zinc-400 dark:text-ink-400">/ {formatCOP(total)}</span>
+        </span>
       </div>
-      <span className="h-display text-2xl text-zinc-900 dark:text-white tracking-tight2 tabular-nums">
-        <AnimatedCounter value={value} />
-      </span>
-    </motion.div>
+      <div className="relative h-2 rounded-full bg-zinc-100 dark:bg-white/[0.06] overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{
+            duration: 1.2,
+            ease: [0.16, 1, 0.3, 1],
+            delay: 0.6 + index * 0.15,
+          }}
+          className="absolute inset-y-0 left-0 rounded-full bg-gradient-brand"
+          style={{ filter: 'drop-shadow(0 0 6px rgba(139,92,246,0.5))' }}
+        />
+      </div>
+      <div className="mt-1 text-right">
+        <span className="text-[10px] text-muted-foreground tabular-nums">
+          {pct.toFixed(0)}%
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function Stars({ value }: { value: number }) {
+  return (
+    <div className="inline-flex">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={cn(
+            'h-3 w-3',
+            i < value
+              ? 'fill-amber-400 text-amber-400'
+              : 'text-zinc-300 dark:text-ink-400',
+          )}
+        />
+      ))}
+    </div>
   );
 }

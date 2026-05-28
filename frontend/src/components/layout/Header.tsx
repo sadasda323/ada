@@ -2,12 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Menu, ChevronDown, LogOut, User as UserIcon,
-  Search, Bell, Sun, Moon,
+  Search, Bell,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 import { useAuthStore } from '@/stores/auth.store';
-import { useThemeStore } from '@/stores/theme.store';
 import { authApi } from '@/services/auth.service';
 import { initials, cn } from '@/lib/utils';
 
@@ -29,6 +27,7 @@ import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { inputClassName } from '@/components/ui/Input';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
 const rolLabel: Record<string, string> = {
   ADMIN_EMPRESA: 'Administrador',
@@ -44,8 +43,6 @@ interface HeaderProps {
 export function Header({ onToggleSidebar }: HeaderProps) {
   const user = useAuthStore((s) => s.user);
   const clear = useAuthStore((s) => s.clear);
-  const theme = useThemeStore((s) => s.theme);
-  const toggleTheme = useThemeStore((s) => s.toggle);
   const navigate = useNavigate();
   const [hasNotifs] = useState(true);
 
@@ -54,8 +51,6 @@ export function Header({ onToggleSidebar }: HeaderProps) {
     clear();
     navigate('/login', { replace: true });
   };
-
-  const isDark = theme === 'dark';
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -105,31 +100,8 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
         {/* Derecha: theme + bell + separator + avatar dropdown */}
         <div className="flex items-center gap-1 sm:gap-2">
-          {/* Theme toggle */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors dark:text-ink-300 dark:hover:text-white dark:hover:bg-white/[0.06] active:scale-95 overflow-hidden shrink-0"
-                aria-label={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-              >
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.span
-                    key={isDark ? 'sun' : 'moon'}
-                    initial={{ y: -16, opacity: 0, rotate: -90 }}
-                    animate={{ y: 0, opacity: 1, rotate: 0 }}
-                    exit={{ y: 16, opacity: 0, rotate: 90 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="inline-flex"
-                  >
-                    {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                  </motion.span>
-                </AnimatePresence>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>{isDark ? 'Tema claro' : 'Tema oscuro'}</TooltipContent>
-          </Tooltip>
+          {/* Theme toggle (pill switch iOS-style) */}
+          <ThemeToggle className="mr-1" />
 
           {/* Notificaciones */}
           <Tooltip>
