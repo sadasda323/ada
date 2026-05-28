@@ -21,6 +21,7 @@ import {
   MiniBarChart,
   MiniCandleChart,
 } from '@/components/charts';
+import { RollingDigits } from '@/components/charts/RollingDigits';
 import { SalesAnalyticsChart } from '@/components/charts/SalesAnalyticsChart';
 import { TopProductsHeatmap } from '@/components/charts/TopProductsHeatmap';
 
@@ -145,9 +146,10 @@ export function DashboardPage() {
           label="Nómina del mes"
           loading={isLoading}
           value={
-            <AnimatedNumber
+            <RollingDigits
               value={totalRevenue}
               format={(n) => formatCOP(n)}
+              duration={1.8}
             />
           }
           delta={4.2}
@@ -160,7 +162,7 @@ export function DashboardPage() {
           icon={<Users className="h-4 w-4" />}
           label="Empleados totales"
           loading={isLoading}
-          value={<AnimatedNumber value={totalOrders} />}
+          value={<RollingDigits value={totalOrders} duration={1.6} />}
           delta={4.0}
           deltaText="vs. mes anterior"
           chart={<MiniCandleChart data={ordersCandles} className="h-12 w-32" width={130} height={48} />}

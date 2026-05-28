@@ -90,12 +90,23 @@ export function TopProductsHeatmap({
             </text>
           ))}
 
-          {/* Cells */}
-          {rows.map((_, i) =>
-            cols.map((_, j) => {
-              const v = matrix[i]?.[j] ?? 0;
+          {/* Cells - stagger por valor (las más altas aparecen primero) */}
+          {(() => {
+            // Pre-calcular orden de aparición: ordenar índices por valor descendente
+            const cells: { i: number; j: number; v: number }[] = [];
+            rows.forEach((_, i) =>
+              cols.forEach((_, j) => {
+                cells.push({ i, j, v: matrix[i]?.[j] ?? 0 });
+              }),
+            );
+            const sorted = [...cells].sort((a, b) => b.v - a.v);
+            const orderMap = new Map<string, number>();
+            sorted.forEach(({ i, j }, k) => orderMap.set(`${i}-${j}`, k));
+
+            return cells.map(({ i, j, v }) => {
               const x = yLabelWidth + j * (cell + gap);
               const y = xLabelHeight + i * (cell + gap);
+              const order = orderMap.get(`${i}-${j}`) ?? 0;
 
               return (
                 <motion.rect
@@ -106,18 +117,23 @@ export function TopProductsHeatmap({
                   height={cell}
                   rx={6}
                   ry={6}
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0, scale: 0.5, y: y + 8 }}
+                  animate={{ opacity: 1, scale: 1, y }}
                   transition={{
-                    duration: 0.32,
-                    delay: 0.05 * i + 0.04 * j,
+                    duration: 0.35,
+                    delay: 0.02 * order,
                     ease: [0.16, 1, 0.3, 1],
                   }}
                   className={getCellClass(v)}
+                  style={
+                    v >= 0.65
+                      ? { filter: 'drop-shadow(0 0 4px rgba(139,92,246,0.25))' }
+                      : undefined
+                  }
                 />
               );
-            }),
-          )}
+            });
+          })()}
         </svg>
       </div>
     </div>

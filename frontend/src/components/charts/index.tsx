@@ -59,14 +59,9 @@ export function MiniBarChart({
             }}
             className={cn(
               isActive
-                ? 'fill-violet-600 dark:fill-violet-400'
+                ? 'fill-violet-600 dark:fill-violet-400 [filter:drop-shadow(0_0_4px_rgba(139,92,246,0.45))] dark:[filter:drop-shadow(0_0_8px_rgba(167,139,250,0.85))]'
                 : 'fill-zinc-300 dark:fill-white/[0.10]',
             )}
-            style={
-              isActive
-                ? { filter: 'drop-shadow(0 0 6px rgba(139,92,246,0.5))' }
-                : undefined
-            }
           />
         );
       })}

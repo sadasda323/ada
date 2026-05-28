@@ -107,6 +107,24 @@
       radial-gradient(50% 40% at 90% 10%, rgba(0, 0, 0, 0.03), transparent 60%);
     background-attachment: fixed;
     min-height: 100vh;
+    /* Cross-fade global cuando se cambia el tema */
+    transition:
+      background-color 280ms cubic-bezier(0.16, 1, 0.3, 1),
+      color 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Que TODO el árbol haga un cross-fade suave del color/bg/border al cambiar tema */
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+    transition-duration: 240ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Excepciones donde NO queremos transition global (rendimiento, accordions, modales) */
+  .no-theme-transition,
+  .no-theme-transition *,
+  [data-state] {
+    transition-property: opacity, transform;
   }
 
   .dark body {

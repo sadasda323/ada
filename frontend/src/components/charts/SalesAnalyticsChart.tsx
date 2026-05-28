@@ -27,6 +27,9 @@ interface Props {
   className?: string;
   rangeLabel?: string;
   scopeLabel?: string;
+  /** Si está activo, el tooltip recorre la curva automáticamente cada `tourInterval` segundos. */
+  autoTour?: boolean;
+  tourInterval?: number;
 }
 
 export function SalesAnalyticsChart({
@@ -35,6 +38,8 @@ export function SalesAnalyticsChart({
   className,
   rangeLabel = '10–15 April 2026',
   scopeLabel = 'Daily Sales',
+  autoTour = true,
+  tourInterval = 2.4,
 }: Props) {
   const W = 720;
   const H = 220;
@@ -65,13 +70,24 @@ export function SalesAnalyticsChart({
   });
 
   const [hoverIdx, setHoverIdx] = React.useState<number | null>(null);
+  const [tourIdx, setTourIdx] = React.useState(0);
+  const [isHovering, setIsHovering] = React.useState(false);
   const svgRef = React.useRef<SVGSVGElement>(null);
 
+  // Auto-tour: recorre los puntos de la curva cíclicamente cuando no se hace hover
+  React.useEffect(() => {
+    if (!autoTour || isHovering) return;
+    const id = setInterval(() => {
+      setTourIdx((i) => (i + 1) % data.length);
+    }, tourInterval * 1000);
+    return () => clearInterval(id);
+  }, [autoTour, isHovering, data.length, tourInterval]);
+
   const handleMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    setIsHovering(true);
     const rect = svgRef.current?.getBoundingClientRect();
     if (!rect) return;
     const x = ((e.clientX - rect.left) / rect.width) * W;
-    // Encontrar el punto más cercano
     let best = 0;
     let bestDist = Infinity;
     points.forEach((p, i) => {
@@ -84,7 +100,13 @@ export function SalesAnalyticsChart({
     setHoverIdx(best);
   };
 
-  const active = hoverIdx !== null ? points[hoverIdx] : null;
+  const handleLeave = () => {
+    setIsHovering(false);
+    setHoverIdx(null);
+  };
+
+  const activeIdx = hoverIdx ?? (autoTour ? tourIdx : null);
+  const active = activeIdx !== null ? points[activeIdx] : null;
 
   return (
     <div
@@ -126,7 +148,7 @@ export function SalesAnalyticsChart({
           className="w-full h-[220px] cursor-crosshair"
           preserveAspectRatio="none"
           onMouseMove={handleMove}
-          onMouseLeave={() => setHoverIdx(null)}
+          onMouseLeave={handleLeave}
           aria-label={title}
         >
           <defs>
@@ -201,27 +223,36 @@ export function SalesAnalyticsChart({
             style={{ filter: 'drop-shadow(0 0 8px rgba(139,92,246,0.35))' }}
           />
 
-          {/* Hover crosshair + dot + tooltip */}
+          {/* Hover/tour crosshair + dot + tooltip */}
           {active && (
-            <>
+            <motion.g
+              initial={false}
+              animate={{ x: active.x }}
+              transition={{ type: 'spring', stiffness: 220, damping: 26 }}
+            >
               <line
-                x1={active.x}
-                x2={active.x}
+                x1={0}
+                x2={0}
                 y1={padTop}
                 y2={padTop + innerH}
                 strokeDasharray="3 3"
                 className="stroke-zinc-300 dark:stroke-white/[0.18]"
               />
-              <circle
-                cx={active.x}
-                cy={active.y}
-                r={6}
-                className="fill-white dark:fill-ink-900 stroke-violet-500 dark:stroke-violet-400"
-                strokeWidth={2.5}
-                style={{ filter: 'drop-shadow(0 0 6px rgba(139,92,246,0.5))' }}
-              />
-              <ChartTooltip x={active.x} y={active.y} value={active.value} amount={active.amount} />
-            </>
+            </motion.g>
+          )}
+          {active && (
+            <motion.circle
+              initial={false}
+              animate={{ cx: active.x, cy: active.y }}
+              transition={{ type: 'spring', stiffness: 220, damping: 26 }}
+              r={6}
+              className="fill-white dark:fill-ink-900 stroke-violet-500 dark:stroke-violet-400"
+              strokeWidth={2.5}
+              style={{ filter: 'drop-shadow(0 0 8px rgba(139,92,246,0.6))' }}
+            />
+          )}
+          {active && (
+            <ChartTooltip x={active.x} y={active.y} value={active.value} amount={active.amount} />
           )}
         </svg>
       </div>
@@ -255,13 +286,13 @@ function ChartTooltip({
 
   return (
     <motion.g
-      initial={{ opacity: 0, y: ty + 6 }}
-      animate={{ opacity: 1, y: ty }}
-      transition={{ duration: 0.18 }}
+      initial={false}
+      animate={{ x: tx, y: ty, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 200, damping: 24 }}
     >
       <rect
-        x={tx}
-        y={ty}
+        x={0}
+        y={0}
         width={w}
         height={h}
         rx={8}
@@ -269,8 +300,8 @@ function ChartTooltip({
         style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.35))' }}
       />
       <text
-        x={tx + w / 2}
-        y={ty + 15}
+        x={w / 2}
+        y={15}
         textAnchor="middle"
         className="fill-white text-[10px] font-medium"
       >
@@ -278,8 +309,8 @@ function ChartTooltip({
       </text>
       {amount !== undefined && (
         <text
-          x={tx + w / 2}
-          y={ty + 28}
+          x={w / 2}
+          y={28}
           textAnchor="middle"
           className="fill-violet-300 text-[10px] font-semibold tabular-nums"
         >
